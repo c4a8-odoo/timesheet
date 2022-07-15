@@ -10,7 +10,9 @@ class AccountAnalyticLine(models.Model):
 
     exclude_from_sale_order = fields.Boolean(
         string="Non-billable",
+        related="non_allow_billable",
         help="Checking this would exclude this timesheet entry from Sale Order",
+        store=True,
     )
 
     @api.onchange("task_id", "employee_id")
@@ -41,6 +43,11 @@ class AccountAnalyticLine(models.Model):
                     )
                 )
 
+    def write(self, vals):
+        if vals.get("non_allow_billable"):
+            vals["exclude_from_sale_order"] = vals.get("non_allow_billable")
+        return super(AccountAnalyticLine, self).write(vals)
+
     def _timesheet_get_sale_line(self):
         self.ensure_one()
         if self.exclude_from_sale_order:
@@ -68,19 +75,37 @@ class AccountAnalyticLine(models.Model):
 
     def _timesheet_determine_sale_line_arguments(self, values=None):
         if values:
+            values.get("project_id")
             return {
                 "task": self.env["project.task"].sudo().browse(values.get("task_id")),
                 "employee": self.env["hr.employee"]
                 .sudo()
                 .browse(values.get("employee_id")),
+                "project": self.env["project.project"]
+                .sudo()
+                .browse(values.get("project_id")),
             }
-        return {"task": self.task_id, "employee": self.employee_id}
+        return {
+            "task": self.task_id,
+            "employee": self.employee_id,
+            "project": self.project_id,
+        }
 
-    @api.depends("exclude_from_sale_order")
+    @api.depends(
+        "so_line.product_id",
+        "project_id",
+        "amount",
+        "exclude_from_sale_order",
+        "non_allow_billable",
+    )
     def _compute_timesheet_invoice_type(self):
         result = super()._compute_timesheet_invoice_type()
         for line in self:
-            if line.project_id and line.task_id and line.exclude_from_sale_order:
+            if (
+                line.project_id
+                and line.task_id
+                and (line.exclude_from_sale_order or line.non_allow_billable)
+            ):
                 line.timesheet_invoice_type = "non_billable"
         return result
 
