@@ -108,6 +108,7 @@ class TestSaleTimesheetLineExclude(common.TransactionCase):
         )
         sale_order.action_confirm()
         task = self.SudoProjectTask.search([("sale_line_id", "=", sale_order_line.id)])
+        self.assertTrue(task)
         timesheet1 = self.SudoAccountAnalyticLine.create(
             {
                 "project_id": task.project_id.id,
@@ -128,7 +129,8 @@ class TestSaleTimesheetLineExclude(common.TransactionCase):
             }
         )
 
-        self.assertTrue(timesheet1.so_line)
+        self.assertTrue(task.sale_line_id)
+        self.assertTrue(timesheet1.sale_line_id)
         self.assertEqual(timesheet1.timesheet_invoice_type, "billable_time")
         self.assertEqual(timesheet2.timesheet_invoice_type, "billable_time")
         self.assertEqual(sale_order_line.qty_delivered, 2)
