@@ -10,7 +10,8 @@ class AccountAnalyticLine(models.Model):
 
     exclude_from_sale_order = fields.Boolean(
         string="Non-billable",
-        related="non_allow_billable",
+        compute="_compute_exclude_from_sale_order",
+        inverse="_inverse_exclude_from_sale_order",
         help="Checking this would exclude this timesheet entry from Sale Order",
         store=True,
     )
@@ -47,6 +48,14 @@ class AccountAnalyticLine(models.Model):
         if vals.get("non_allow_billable"):
             vals["exclude_from_sale_order"] = vals.get("non_allow_billable")
         return super(AccountAnalyticLine, self).write(vals)
+
+    def _compute_exclude_from_sale_order(self):
+        for line in self:
+            line.exclude_from_sale_order = line.non_allow_billable
+
+    def _inverse_exclude_from_sale_order(self):
+        for line in self:
+            line.non_allow_billable = line.exclude_from_sale_order
 
     def _timesheet_get_sale_line(self):
         self.ensure_one()
