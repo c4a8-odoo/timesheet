@@ -130,7 +130,7 @@ class TestSaleTimesheetLineExclude(common.TransactionCase):
         )
 
         self.assertTrue(task.sale_line_id)
-        self.assertTrue(timesheet1.sale_line_id)
+        self.assertTrue(timesheet1.so_line)
         self.assertEqual(timesheet1.timesheet_invoice_type, "billable_time")
         self.assertEqual(timesheet2.timesheet_invoice_type, "billable_time")
         self.assertEqual(sale_order_line.qty_delivered, 2)
