@@ -92,14 +92,11 @@ class AccountAnalyticLine(models.Model):
         }
 
     @api.depends(
-        "so_line.product_id",
-        "project_id",
-        "amount",
         "exclude_from_sale_order",
         "non_allow_billable",
     )
     def _compute_timesheet_invoice_type(self):
-        super()._compute_timesheet_invoice_type()
+        super(AccountAnalyticLine, self)._compute_timesheet_invoice_type()
         for line in self:
             if (
                 line.project_id
